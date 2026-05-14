@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finland Labour Market Dashboard | Työnhakijat ja avoimet työpaikat</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1e2630;
+    --border: #2a3441;
+    --accent: #3fb950;
+    --accent2: #f78166;
+    --accent3: #58a6ff;
+    --accent4: #d2a8ff;
+    --text: #e6edf3;
+    --text-muted: #7d8590;
+    --text-dim: #4d5566;
+    --chart-1: #3fb950;
+    --chart-2: #f78166;
+    --chart-3: #58a6ff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* HEADER */
+  header {
+    padding: 28px 40px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .header-left h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+  }
+
+  .header-left h1 span { color: var(--accent); }
+  .header-left .subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-weight: 300;
+  }
+
+  .lang-toggle {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .lang-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .lang-btn.active, .lang-btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+  }
+
+  .source-badge {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: right;
+  }
+  .source-badge a { color: var(--accent3); text-decoration: none; }
+  .source-badge strong { color: var(--text-muted); }
+
+  /* DISCLAIMER */
+  .disclaimer {
+    margin: 14px 40px;
+    padding: 10px 16px;
+    background: #1c2233;
+    border-left: 3px solid var(--accent3);
+    border-radius: 0 6px 6px 0;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* FILTERS */
+  .filters {
+    padding: 16px 40px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .filter-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 28px 7px 10px;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237d8590' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: border-color 0.2s;
+    min-width: 180px;
+  }
+  select:hover { border-color: var(--accent); }
+
+  /* KPI ROW */
+  .kpi-row {
+    display: flex;
+    gap: 14px;
+    padding: 20px 40px;
+    flex-wrap: wrap;
+  }
+
+  .kpi-card {
+    flex: 1;
+    min-width: 180px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .kpi-card:hover { border-color: var(--accent); }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--kpi-color, var(--accent));
+  }
+
+  .kpi-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 8px;
+  }
+
+  .kpi-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--kpi-color, var(--accent));
+    line-height: 1;
+  }
+
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 5px;
+  }
+
+  .kpi-delta {
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .kpi-delta.up { color: var(--accent2); }
+  .kpi-delta.down { color: var(--accent); }
+
+  /* CHARTS GRID */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    padding: 0 40px 20px;
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .chart-card.wide { grid-column: 1 / -1; }
+
+  .chart-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .chart-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  canvas {
+    max-width: 100%;
+    display: block;
+  }
+
+  /* TABLE */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 0 40px 20px;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+
+  thead th {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 10px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  tbody tr:hover { background: var(--surface2); }
+
+  tbody td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .occ-code { color: var(--text-muted); font-size: 11px; }
+  .ratio-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .bar-bg {
+    flex: 1;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--accent2);
+    transition: width 0.4s;
+  }
+  .bar-fill.good { background: var(--accent); }
+
+  .tag-alert {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .tag-alert.red { background: rgba(247,129,102,0.15); color: var(--accent2); }
+  .tag-alert.green { background: rgba(63,185,80,0.15); color: var(--accent); }
+  .tag-alert.orange { background: rgba(210,168,255,0.15); color: var(--accent4); }
+
+  /* INSIGHT PANEL */
+  .insight-panel {
+    margin: 0 40px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+  }
+
+  .insight-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .insight-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent2);
+  }
+
+  .insight-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+  }
+
+  .insight-item {
+    padding: 12px 14px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border-left: 3px solid var(--border);
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+  .insight-item strong { color: var(--text); display: block; margin-bottom: 3px; }
+  .insight-item.warn { border-left-color: var(--accent2); }
+  .insight-item.good { border-left-color: var(--accent); }
+  .insight-item.info { border-left-color: var(--accent3); }
+  .insight-item.purple { border-left-color: var(--accent4); }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 20px 40px;
+    font-size: 11px;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+  }
+  footer strong { color: var(--text-muted); }
+
+  @media (max-width: 768px) {
+    header, .filters, .kpi-row, .charts-grid, .table-card, .insight-panel { padding-left: 16px; padding-right: 16px; }
+    .charts-grid { grid-template-columns: 1fr; }
+    .chart-card.wide { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Finland <span>Labour Market</span> Dashboard<br>
+    <span style="font-size:14px;color:var(--text-muted);font-weight:400">Suomen työmarkkinat — Työnhakijat &amp; avoimet paikat</span></h1>
+    <div class="subtitle">Data: KEHA Centre / Tilastokeskus · March 2021–2026 · Selected occupations only</div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('fi')">FI</button>
+    </div>
+  </div>
+  <div class="source-badge">
+    <strong>Source:</strong> <a href="https://stat.fi/en/statistics/tyonv" target="_blank">stat.fi / työnvälitystilasto</a><br>
+    KEHA Centre, Employment Service Statistics<br>
+    Last update: 22.04.2026 · Reference month: March 2026
+  </div>
+</header>
+
+<div class="disclaimer" id="disclaimer">
+  ⚠️ <strong>Note:</strong> This dashboard covers a <em>selected sample of occupations</em> from Tilastokeskus, not all professions available in the full dataset. Cells marked "..." indicate data subject to secrecy (too few observations). Whole Country figures include all occupations; occupation-level breakdown shows selected codes only.
+</div>
+
+<!-- FILTERS -->
+<div class="filters">
+  <div class="filter-group">
+    <div class="filter-label" id="lbl-region">Region</div>
+    <select id="regionFilter" onchange="update()">
+      <option value="WHOLE COUNTRY">🇫🇮 Whole Country / Koko maa</option>
+      <option value="MK01 Uusimaa">📍 Uusimaa</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <div class="filter-label" id="lbl-year">Year</div>
+    <select id="yearFilter" onchange="update()">
+      <option value="2026">2026 (March)</option>
+      <option value="2025">2025 (March)</option>
+      <option value="2024">2024 (March)</option>
+      <option value="2023">2023 (March)</option>
+      <option value="2022">2022 (March)</option>
+      <option value="2021">2021 (March)</option>
+    </select>
+  </div>
+</div>
+
+<!-- KPI ROW -->
+<div class="kpi-row">
+  <div class="kpi-card" style="--kpi-color: var(--accent2)">
+    <div class="kpi-label" id="kpi1-label">Unemployed jobseekers</div>
+    <div class="kpi-value" id="kpi1-val">—</div>
+    <div class="kpi-sub" id="kpi1-sub">Whole country total (all occupations)</div>
+    <div class="kpi-delta" id="kpi1-delta"></div>
+  </div>
+  <div class="kpi-card" style="--kpi-color: var(--accent3)">
+    <div class="kpi-label" id="kpi2-label">Open vacancies</div>
+    <div class="kpi-value" id="kpi2-val">—</div>
+    <div class="kpi-sub" id="kpi2-sub">Posted to TE Offices (all occupations)</div>
+    <div class="kpi-delta" id="kpi2-delta"></div>
+  </div>
+  <div class="kpi-card" style="--kpi-color: var(--accent4)">
+    <div class="kpi-label" id="kpi3-label">Seekers per vacancy</div>
+    <div class="kpi-value" id="kpi3-val">—</div>
+    <div class="kpi-sub">Overall market pressure ratio</div>
+    <div class="kpi-delta" id="kpi3-delta"></div>
+  </div>
+  <div class="kpi-card" style="--kpi-color: var(--accent)">
+    <div class="kpi-label" id="kpi4-label">Highest demand occupation</div>
+    <div class="kpi-value" id="kpi4-val" style="font-size:16px;line-height:1.3">—</div>
+    <div class="kpi-sub" id="kpi4-sub"></div>
+  </div>
+</div>
+
+<!-- CHARTS -->
+<div class="charts-grid">
+  <div class="chart-card wide">
+    <div class="chart-title" id="ch1-title">Unemployed Jobseekers vs Vacancies — Trend 2021–2026</div>
+    <div class="chart-sub" id="ch1-sub">Total figures for selected region (all occupations) · March each year</div>
+    <canvas id="trendChart" height="100"></canvas>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title" id="ch2-title">Seekers per Vacancy by Occupation (selected year)</div>
+    <div class="chart-sub" id="ch2-sub">Higher = more competition for fewer jobs · "..." values excluded</div>
+    <canvas id="ratioChart" height="220"></canvas>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title" id="ch3-title">Unemployed Jobseekers by Occupation</div>
+    <div class="chart-sub" id="ch3-sub">Selected occupations only · Sorted by volume</div>
+    <canvas id="occChart" height="220"></canvas>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="table-card">
+  <div class="chart-title" id="tbl-title" style="margin-bottom:4px">Occupation Detail Table</div>
+  <div class="chart-sub" id="tbl-sub">Selected occupations · Showing only entries with full data for selected year</div>
+  <table>
+    <thead>
+      <tr>
+        <th id="th-code">Code</th>
+        <th id="th-name">Occupation</th>
+        <th id="th-unemp">Unemployed</th>
+        <th id="th-vac">Vacancies</th>
+        <th id="th-ratio">Seekers / Vacancy</th>
+        <th id="th-trend">Trend vs 2021</th>
+        <th id="th-status">Status</th>
+      </tr>
+    </thead>
+    <tbody id="occTable"></tbody>
+  </table>
+</div>
+
+<!-- AGE/OCCUPATION chart from file 2 -->
+<div class="charts-grid">
+  <div class="chart-card wide">
+    <div class="chart-title" id="ch4-title">Unemployed Jobseekers by Age Group & Occupation Category — Whole Country, March 2026</div>
+    <div class="chart-sub" id="ch4-sub">Source: File 2 — Jobseekers by occupation and education · Total sex · All education levels</div>
+    <canvas id="ageChart" height="100"></canvas>
+  </div>
+</div>
+
+<!-- INSIGHTS -->
+<div class="insight-panel">
+  <div class="insight-title"><div class="insight-dot"></div><span id="ins-title">Key Findings & Problem Areas</span></div>
+  <div class="insight-grid" id="insightGrid"></div>
+</div>
+
+<footer>
+  <strong>Finland Labour Market Dashboard</strong> · Data: KEHA Centre / Tilastokeskus (stat.fi) · March 2021–2026 · Selected occupations sample<br>
+  Built for portfolio purposes · Data last updated 22.04.2026 · <strong>Author: </strong>
+  <span id="author-name">Anna Bakalo · <a href="https://www.linkedin.com/in/anna-bakalo" target="_blank" style="color:var(--accent3)">LinkedIn</a> · annabakalo07@gmail.com</span>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// ========== DATA ==========
+const LANG = { current: 'en' };
+
+const translations = {
+  en: {
+    region: 'Region', year: 'Year (March)',
+    kpi1: 'Unemployed jobseekers', kpi2: 'Open vacancies',
+    kpi3: 'Seekers per vacancy', kpi4: 'Highest demand occupation',
+    kpi1sub: 'Total, all occupations', kpi2sub: 'Posted to TE Offices',
+    trendTitle: 'Unemployed Jobseekers vs Vacancies — Trend 2021–2026',
+    trendSub: 'Total for selected region · All occupations · March each year',
+    ratioTitle: 'Seekers per Vacancy by Occupation',
+    ratioSub: 'Higher = more competition for fewer jobs',
+    occTitle: 'Unemployed Jobseekers by Occupation',
+    occSub: 'Selected occupations only · Sorted by volume',
+    tblTitle: 'Occupation Detail Table',
+    tblSub: 'Selected occupations · Current filter',
+    thCode: 'Code', thName: 'Occupation', thUnemp: 'Unemployed', thVac: 'Vacancies',
+    thRatio: 'Seekers/Vacancy', thTrend: 'Trend vs 2021', thStatus: 'Status',
+    ageTitle: 'Unemployed Jobseekers by Age Group & Occupation Category — Whole Country, March 2026',
+    ageSub: 'Source: File 2 — Jobseekers by occupation and education · All genders · All education levels',
+    insTitle: 'Key Findings & Problem Areas',
+    note: '⚠️ This dashboard covers a selected sample of occupations from Tilastokeskus, not all professions. Cells with "..." = data suppressed (too few observations).',
+    seekers: 'seekers', vacancies: 'vacancies', ratio: 'ratio',
+    statusAlert: 'High pressure', statusOK: 'Balanced', statusGood: 'Shortage',
+    vsBase: 'vs 2021 base',
+    highDemand: 'seekers, low vacancies',
+  },
+  fi: {
+    region: 'Alue', year: 'Vuosi (maaliskuu)',
+    kpi1: 'Työttömät työnhakijat', kpi2: 'Avoimet työpaikat',
+    kpi3: 'Hakijat per paikka', kpi4: 'Korkein kilpailupaine',
+    kpi1sub: 'Yhteensä, kaikki ammatit', kpi2sub: 'Ilmoitettu TE-toimistoon',
+    trendTitle: 'Työttömät työnhakijat vs avoimet paikat 2021–2026',
+    trendSub: 'Valittu alue · Kaikki ammatit · Maaliskuu vuosittain',
+    ratioTitle: 'Hakijat per avoin paikka ammateittain',
+    ratioSub: 'Korkeampi = enemmän kilpailua vähemmistä paikoista',
+    occTitle: 'Työttömät työnhakijat ammateittain',
+    occSub: 'Vain valitut ammatit · Järjestetty volyymin mukaan',
+    tblTitle: 'Ammattitaulukko',
+    tblSub: 'Valitut ammatit · Nykyinen suodatin',
+    thCode: 'Koodi', thName: 'Ammatti', thUnemp: 'Työtön', thVac: 'Avoimet',
+    thRatio: 'Hakijat/paikka', thTrend: 'Muutos 2021', thStatus: 'Tila',
+    ageTitle: 'Työttömät työnhakijat ikäryhmän ja ammattiluokan mukaan — Koko maa, maaliskuu 2026',
+    ageSub: 'Lähde: Tiedosto 2 — Työnhakijat ammatin ja koulutuksen mukaan · Kaikki sukupuolet',
+    insTitle: 'Keskeiset havainnot ja ongelma-alueet',
+    note: '⚠️ Tämä kojelauta kattaa vain otannan ammateista Tilastokeskuksesta, ei kaikkia ammatteja. "..." = tieto salattu.',
+    seekers: 'hakijaa', vacancies: 'paikkaa', ratio: 'suhde',
+    statusAlert: 'Kova kilpailu', statusOK: 'Tasapainoinen', statusGood: 'Pula',
+    vsBase: 'vs. 2021 pohja',
+    highDemand: 'hakijaa, vähän paikkoja',
+  }
+};
+
+// FILE 1: Unemployed + Vacancies by occupation, by region, March each year
+const rawData = {
+  "WHOLE COUNTRY": {
+    total: { unemployed: {2021:331526,2022:250722,2023:253876,2024:286127,2025:320372,2026:342759}, vacancies: {2021:79299,2022:132680,2023:99318,2024:64216,2025:49093,2026:39711} },
+    occupations: [
+      {code:"1211", name:"Finance managers",                unemp:{2021:299,2022:230,2023:209,2024:222,2025:302,2026:371}, vac:{2021:9,2022:15,2023:9,2024:12,2025:10,2026:8}},
+      {code:"1219", name:"Business services & admin managers", unemp:{2021:371,2022:293,2023:286,2024:269,2025:518,2026:689}, vac:{2021:30,2022:18,2023:35,2024:29,2025:44,2026:100}},
+      {code:"1221", name:"Sales & marketing managers",      unemp:{2021:582,2022:444,2023:446,2024:583,2025:1087,2026:1469}, vac:{2021:65,2022:93,2023:53,2024:25,2025:35,2026:54}},
+      {code:"1223", name:"R&D managers",                   unemp:{2021:67,2022:48,2023:43,2024:47,2025:203,2026:396}, vac:{2021:null,2022:null,2023:6,2024:null,2025:7,2026:9}},
+      {code:"1321", name:"Manufacturing managers",         unemp:{2021:190,2022:140,2023:155,2024:194,2025:278,2026:315}, vac:{2021:19,2022:33,2023:15,2024:11,2025:10,2026:6}},
+      {code:"1411", name:"Hotel managers",                 unemp:{2021:96,2022:50,2023:42,2024:44,2025:67,2026:70}, vac:{2021:5,2022:null,2023:null,2024:null,2025:null,2026:null}},
+      {code:"1412", name:"Restaurant managers",            unemp:{2021:89,2022:46,2023:42,2024:45,2025:187,2026:328}, vac:{2021:null,2022:11,2023:118,2024:84,2025:60,2026:61}},
+      {code:"2411", name:"Accountants",                    unemp:{2021:486,2022:392,2023:373,2024:425,2025:550,2026:652}, vac:{2021:92,2022:131,2023:104,2024:61,2025:32,2026:44}},
+      {code:"2413", name:"Financial analysts",             unemp:{2021:171,2022:137,2023:146,2024:151,2025:181,2026:137}, vac:{2021:16,2022:29,2023:13,2024:16,2025:6,2026:null}},
+      {code:"2511", name:"Systems analysts",               unemp:{2021:989,2022:763,2023:755,2024:946,2025:1201,2026:1530}, vac:{2021:136,2022:143,2023:84,2024:57,2025:65,2026:49}},
+      {code:"2522", name:"Systems administrators",         unemp:{2021:87,2022:50,2023:50,2024:57,2025:164,2026:375}, vac:{2021:17,2022:14,2023:6,2024:12,2025:14,2026:16}},
+      {code:"2523", name:"Computer network professionals", unemp:{2021:102,2022:82,2023:90,2024:95,2025:104,2026:95}, vac:{2021:28,2022:32,2023:14,2024:6,2025:null,2026:null}},
+      {code:"2631", name:"Economists",                     unemp:{2021:169,2022:136,2023:149,2024:154,2025:228,2026:279}, vac:{2021:null,2022:7,2023:null,2024:null,2025:6,2026:10}},
+      {code:"4221", name:"Travel consultants & clerks",    unemp:{2021:1017,2022:468,2023:389,2024:381,2025:475,2026:558}, vac:{2021:15,2022:26,2023:44,2024:11,2025:8,2026:10}},
+      {code:"4311", name:"Accounting & bookkeeping clerks",unemp:{2021:911,2022:678,2023:674,2024:766,2025:878,2026:773}, vac:{2021:167,2022:209,2023:132,2024:64,2025:36,2026:15}},
+      {code:"5151", name:"Cleaning & housekeeping supervisors",unemp:{2021:292,2022:188,2023:189,2024:206,2025:214,2026:226}, vac:{2021:46,2022:130,2023:90,2024:65,2025:49,2026:26}},
+      {code:"7133", name:"Building structure cleaners",    unemp:{2021:83,2022:66,2023:66,2024:70,2025:222,2026:355}, vac:{2021:37,2022:33,2023:51,2024:10,2025:114,2026:131}},
+      {code:"9129", name:"Other cleaning workers",         unemp:{2021:40,2022:34,2023:36,2024:43,2025:49,2026:57}, vac:{2021:38,2022:108,2023:81,2024:30,2025:28,2026:16}},
+    ]
+  },
+  "MK01 Uusimaa": {
+    total: { unemployed: {2021:116025,2022:83929,2023:83753,2024:94984,2025:110119,2026:116700}, vacancies: {2021:20445,2022:35340,2023:26132,2024:16510,2025:9601,2026:6456} },
+    occupations: [
+      {code:"1211", name:"Finance managers",               unemp:{2021:183,2022:139,2023:136,2024:138,2025:184,2026:216}, vac:{2021:null,2022:null,2023:null,2024:null,2025:null,2026:null}},
+      {code:"1219", name:"Business services & admin managers",unemp:{2021:202,2022:151,2023:147,2024:144,2025:257,2026:321}, vac:{2021:6,2022:null,2023:9,2024:5,2025:16,2026:39}},
+      {code:"1221", name:"Sales & marketing managers",     unemp:{2021:344,2022:234,2023:252,2024:335,2025:615,2026:871}, vac:{2021:31,2022:49,2023:19,2024:7,2025:9,2026:14}},
+      {code:"1223", name:"R&D managers",                   unemp:{2021:30,2022:27,2023:21,2024:27,2025:119,2026:235}, vac:{2021:null,2022:null,2023:null,2024:0,2025:0,2026:null}},
+      {code:"1321", name:"Manufacturing managers",         unemp:{2021:42,2022:32,2023:43,2024:50,2025:59,2026:73}, vac:{2021:5,2022:7,2023:null,2024:null,2025:0,2026:null}},
+      {code:"1411", name:"Hotel managers",                 unemp:{2021:40,2022:16,2023:15,2024:19,2025:28,2026:26}, vac:{2021:null,2022:0,2023:null,2024:0,2025:null,2026:null}},
+      {code:"1412", name:"Restaurant managers",            unemp:{2021:49,2022:22,2023:20,2024:24,2025:88,2026:148}, vac:{2021:null,2022:7,2023:109,2024:32,2025:20,2026:14}},
+      {code:"2411", name:"Accountants",                    unemp:{2021:235,2022:198,2023:185,2024:221,2025:308,2026:366}, vac:{2021:23,2022:53,2023:36,2024:20,2025:5,2026:9}},
+      {code:"2413", name:"Financial analysts",             unemp:{2021:115,2022:82,2023:86,2024:93,2025:114,2026:87}, vac:{2021:8,2022:14,2023:null,2024:9,2025:null,2026:0}},
+      {code:"2511", name:"Systems analysts",               unemp:{2021:475,2022:359,2023:377,2024:488,2025:668,2026:870}, vac:{2021:58,2022:73,2023:41,2024:24,2025:17,2026:20}},
+      {code:"2522", name:"Systems administrators",         unemp:{2021:53,2022:25,2023:27,2024:27,2025:83,2026:179}, vac:{2021:9,2022:8,2023:null,2024:6,2025:null,2026:null}},
+      {code:"2523", name:"Computer network professionals", unemp:{2021:48,2022:40,2023:40,2024:37,2025:42,2026:45}, vac:{2021:7,2022:17,2023:10,2024:null,2025:null,2026:null}},
+      {code:"2631", name:"Economists",                     unemp:{2021:84,2022:73,2023:76,2024:74,2025:127,2026:141}, vac:{2021:null,2022:null,2023:null,2024:null,2025:null,2026:null}},
+      {code:"4221", name:"Travel consultants & clerks",    unemp:{2021:531,2022:213,2023:178,2024:178,2025:192,2026:232}, vac:{2021:null,2022:null,2023:18,2024:null,2025:0,2026:null}},
+      {code:"4311", name:"Accounting & bookkeeping clerks",unemp:{2021:449,2022:318,2023:341,2024:340,2025:405,2026:352}, vac:{2021:47,2022:81,2023:48,2024:25,2025:17,2026:null}},
+      {code:"5151", name:"Cleaning & housekeeping supervisors",unemp:{2021:160,2022:87,2023:88,2024:108,2025:112,2026:108}, vac:{2021:9,2022:31,2023:23,2024:17,2025:7,2026:null}},
+      {code:"7133", name:"Building structure cleaners",    unemp:{2021:17,2022:16,2023:20,2024:23,2025:75,2026:120}, vac:{2021:null,2022:10,2023:16,2024:5,2025:8,2026:null}},
+      {code:"9129", name:"Other cleaning workers",         unemp:{2021:17,2022:17,2023:16,2024:12,2025:16,2026:16}, vac:{2021:null,2022:12,2023:11,2024:null,2025:null,2026:5}},
+    ]
+  }
+};
+
+// FILE 2: Jobseekers by age group & occupation category, Whole Country, March 2026
+const ageData = {
+  ages: ['25–29','30–34','35–39','40–44','45–49'],
+  categories: {
+    '1 Managers':      [340,660,846,1094,1236],
+    '2 Professionals': [7287,8242,7786,7020,5984],
+    '3 Technicians':   [3073,3708,3620,3616,3307],
+    '4 Clerical':      [1433,1773,1739,1724,1509],
+    '5 Service/Sales': [6555,7502,7253,6945,6066],
+    '7 Craft/Trades':  [5862,7019,7038,6971,6340],
+    '9 Elementary':    [2465,3137,3427,3556,3450],
+  }
+};
+
+const YEARS = [2021,2022,2023,2024,2025,2026];
+let charts = {};
+
+function fmt(n) { return n == null ? '...' : n.toLocaleString('fi-FI'); }
+function pct(a,b,base) {
+  if(!base || !a) return '';
+  const d = ((a-base)/base*100).toFixed(1);
+  return (d>0?'+':'')+d+'%';
+}
+
+function getRegion() { return document.getElementById('regionFilter').value; }
+function getYear() { return parseInt(document.getElementById('yearFilter').value); }
+
+function T(key) { return translations[LANG.current][key] || translations.en[key]; }
+
+function setLang(l) {
+  LANG.current = l;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent===l.toUpperCase()));
+  applyTranslations();
+  update();
+}
+
+function applyTranslations() {
+  const t = translations[LANG.current];
+  document.getElementById('lbl-region').textContent = t.region;
+  document.getElementById('lbl-year').textContent = t.year;
+  document.getElementById('kpi1-label').textContent = t.kpi1;
+  document.getElementById('kpi2-label').textContent = t.kpi2;
+  document.getElementById('kpi3-label').textContent = t.kpi3;
+  document.getElementById('kpi4-label').textContent = t.kpi4;
+  document.getElementById('kpi1-sub').textContent = t.kpi1sub;
+  document.getElementById('kpi2-sub').textContent = t.kpi2sub;
+  document.getElementById('ch1-title').textContent = t.trendTitle;
+  document.getElementById('ch1-sub').textContent = t.trendSub;
+  document.getElementById('ch2-title').textContent = t.ratioTitle;
+  document.getElementById('ch2-sub').textContent = t.ratioSub;
+  document.getElementById('ch3-title').textContent = t.occTitle;
+  document.getElementById('ch3-sub').textContent = t.occSub;
+  document.getElementById('tbl-title').textContent = t.tblTitle;
+  document.getElementById('tbl-sub').textContent = t.tblSub;
+  document.getElementById('ch4-title').textContent = t.ageTitle;
+  document.getElementById('ch4-sub').textContent = t.ageSub;
+  document.getElementById('ins-title').textContent = t.insTitle;
+  document.getElementById('disclaimer').innerHTML = '⚠️ <strong>'+(LANG.current==='fi'?'Huomio':'Note')+':</strong> '+t.note;
+  document.getElementById('th-code').textContent = t.thCode;
+  document.getElementById('th-name').textContent = t.thName;
+  document.getElementById('th-unemp').textContent = t.thUnemp;
+  document.getElementById('th-vac').textContent = t.thVac;
+  document.getElementById('th-ratio').textContent = t.thRatio;
+  document.getElementById('th-trend').textContent = t.thTrend;
+  document.getElementById('th-status').textContent = t.thStatus;
+}
+
+function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function update() {
+  const region = getRegion();
+  const year = getYear();
+  const d = rawData[region];
+  const t = d.total;
+  const occs = d.occupations;
+
+  // KPIs
+  const unemp = t.unemployed[year];
+  const vac = t.vacancies[year];
+  const ratio = vac ? (unemp/vac).toFixed(1) : '—';
+  const prevUnemp = t.unemployed[year-1];
+  const prevVac = t.vacancies[year-1];
+
+  document.getElementById('kpi1-val').textContent = fmt(unemp);
+  document.getElementById('kpi2-val').textContent = fmt(vac);
+  document.getElementById('kpi3-val').textContent = ratio;
+
+  const d1 = prevUnemp ? pct(unemp,null,prevUnemp) : '';
+  const d2 = prevVac ? pct(vac,null,prevVac) : '';
+  const delta1El = document.getElementById('kpi1-delta');
+  const delta2El = document.getElementById('kpi2-delta');
+  if(d1) { delta1El.textContent = d1+' '+(LANG.current==='fi'?'edell. vuodesta':'vs prev year'); delta1El.className = 'kpi-delta '+(parseFloat(d1)>0?'up':'down'); }
+  if(d2) { delta2El.textContent = d2+' '+(LANG.current==='fi'?'edell. vuodesta':'vs prev year'); delta2El.className = 'kpi-delta '+(parseFloat(d2)>0?'up':'down'); }
+
+  // Highest seekers / lowest vacancies
+  const withVac = occs.filter(o=>o.vac[year]>0);
+  const sorted = [...withVac].sort((a,b)=>(b.unemp[year]/b.vac[year])-(a.unemp[year]/a.vac[year]));
+  if(sorted.length>0) {
+    const top = sorted[0];
+    document.getElementById('kpi4-val').textContent = top.name;
+    document.getElementById('kpi4-sub').textContent = fmt(top.unemp[year])+' '+T('seekers')+', '+top.vac[year]+' '+T('vacancies')+' (ratio: '+(top.unemp[year]/top.vac[year]).toFixed(0)+':1)';
+  }
+
+  // TREND CHART
+  destroyChart('trend');
+  const ctx1 = document.getElementById('trendChart').getContext('2d');
+  charts['trend'] = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: YEARS.map(y=>y+' (Mar)'),
+      datasets: [
+        {
+          label: T('kpi1'),
+          data: YEARS.map(y=>t.unemployed[y]),
+          borderColor: '#f78166', backgroundColor: 'rgba(247,129,102,0.1)',
+          tension: 0.4, fill: true, pointRadius: 5, pointHoverRadius: 8,
+          borderWidth: 2.5
+        },
+        {
+          label: T('kpi2'),
+          data: YEARS.map(y=>t.vacancies[y]),
+          borderColor: '#58a6ff', backgroundColor: 'rgba(88,166,255,0.07)',
+          tension: 0.4, fill: true, pointRadius: 5, pointHoverRadius: 8,
+          borderWidth: 2.5
+        }
+      ]
+    },
+    options: chartOptions(false)
+  });
+
+  // Filter: only occupations with both unemployed AND vacancy data available for selected year
+  const visibleOccs = occs.filter(o => o.unemp[year] != null && o.vac[year] != null);
+
+  // RATIO CHART
+  const ratioData = visibleOccs.filter(o=>o.vac[year]>0).map(o=>({
+    name: o.code+' '+o.name.substring(0,22),
+    ratio: parseFloat((o.unemp[year]/o.vac[year]).toFixed(1))
+  })).sort((a,b)=>b.ratio-a.ratio).slice(0,12);
+
+  destroyChart('ratio');
+  const ctx2 = document.getElementById('ratioChart').getContext('2d');
+  charts['ratio'] = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: ratioData.map(r=>r.name),
+      datasets: [{
+        label: T('kpi3'),
+        data: ratioData.map(r=>r.ratio),
+        backgroundColor: ratioData.map(r=> r.ratio>20?'#f78166':r.ratio>8?'#d2a8ff':'#3fb950'),
+        borderRadius: 4,
+        borderSkipped: false
+      }]
+    },
+    options: { ...chartOptions(true), indexAxis: 'y' }
+  });
+
+  // OCC CHART
+  const occSorted = [...visibleOccs].sort((a,b)=>b.unemp[year]-a.unemp[year]).slice(0,12);
+  destroyChart('occ');
+  const ctx3 = document.getElementById('occChart').getContext('2d');
+  charts['occ'] = new Chart(ctx3, {
+    type: 'bar',
+    data: {
+      labels: occSorted.map(o=>o.code+' '+o.name.substring(0,20)),
+      datasets: [{
+        label: T('thUnemp'),
+        data: occSorted.map(o=>o.unemp[year]),
+        backgroundColor: '#58a6ff',
+        borderRadius: 4
+      }]
+    },
+    options: { ...chartOptions(true), indexAxis: 'y' }
+  });
+
+  // TABLE
+  const tbody = document.getElementById('occTable');
+  tbody.innerHTML = '';
+  visibleOccs.forEach(o => {
+    const u = o.unemp[year];
+    const v = o.vac[year];
+    const r = (v && v>0) ? (u/v) : null;
+    const base = o.unemp[2021];
+    const change = base ? ((u-base)/base*100).toFixed(1) : null;
+    const maxVac = Math.max(...YEARS.map(y=>o.vac[y]||0));
+    const barPct = r ? Math.min(100, r/30*100) : 0;
+
+    let status, statusClass;
+    if(!v || v===0) { status=T('statusAlert'); statusClass='red'; }
+    else if(r>15) { status=T('statusAlert'); statusClass='red'; }
+    else if(r<3) { status=T('statusGood'); statusClass='green'; }
+    else { status=T('statusOK'); statusClass='orange'; }
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="occ-code">${o.code}</td>
+      <td>${o.name}</td>
+      <td>${fmt(u)}</td>
+      <td>${v==null?'...':fmt(v)}</td>
+      <td>
+        <div class="ratio-bar">
+          <div class="bar-bg"><div class="bar-fill ${statusClass==='green'?'good':''}" style="width:${barPct}%"></div></div>
+          <span>${r?r.toFixed(1):'...'}</span>
+        </div>
+      </td>
+      <td style="color:${change>0?'#f78166':change<0?'#3fb950':'#7d8590'}">${change!=null?(change>0?'+':'')+change+'%':'—'}</td>
+      <td><span class="tag-alert ${statusClass}">${status}</span></td>`;
+    tbody.appendChild(tr);
+  });
+
+  // INSIGHTS
+  buildInsights(region, year, d, occs);
+}
+
+function buildInsights(region, year, d, occs) {
+  const t = d.total;
+  const unemp2026 = t.unemployed[2026];
+  const vac2026 = t.vacancies[2026];
+  const unemp2021 = t.unemployed[2021];
+  const vac2021 = t.vacancies[2021];
+  const unempChg = ((unemp2026-unemp2021)/unemp2021*100).toFixed(1);
+  const vacChg = ((vac2026-vac2021)/vac2021*100).toFixed(1);
+
+  const insightData_en = [
+    {cls:'warn', title:'📈 Total unemployment risen sharply', text:`From 2021 to March 2026, total unemployed jobseekers in ${region} increased by ${unempChg}% (${fmt(unemp2021)} → ${fmt(unemp2026)}). Unemployment rose especially fast in 2024–2026 after a post-COVID low in 2022.`},
+    {cls:'warn', title:'📉 Vacancies collapsed', text:`Open vacancies fell by ${Math.abs(vacChg)}% from 2021 to 2026 (${fmt(vac2021)} → ${fmt(vac2026)}). The vacancy peak was in 2022 — since then the labour market has tightened significantly for jobseekers.`},
+    {cls:'warn', title:'🔴 IT & Tech: growing mismatch', text:`Systems analysts (2511) in ${region} grew from ${fmt(rawData[region].occupations.find(o=>o.code==='2511').unemp[2021])} to ${fmt(rawData[region].occupations.find(o=>o.code==='2511').unemp[2026])} unemployed, while vacancies fell from ${rawData[region].occupations.find(o=>o.code==='2511').vac[2021]} to ${rawData[region].occupations.find(o=>o.code==='2511').vac[2026]}. IT sector is experiencing oversupply.`},
+    {cls:'warn', title:'🔴 Managers: unemployment tripled', text:`Sales & marketing managers (1221) saw unemployment nearly triple from 582 to 1,469 nationally by March 2026. Business services managers (1219) jumped from 371 to 689. Both have very few vacancies.`},
+    {cls:'info', title:'🔵 Building cleaners: still active demand', text:`Building structure cleaners (7133) show the highest vacancy count in 2026 (131 nationally) relative to their unemployed (355). Ratio ~2.7 seekers per vacancy — the most balanced occupation in this sample.`},
+    {cls:'good', title:'🟢 Restaurant sector: active hiring', text:`Restaurant managers (1412) show strong vacancies in 2023–2025 and remain above 60 nationally in 2026. One of the few occupations where vacancies held relatively firm.`},
+    {cls:'purple', title:'🟣 Accounting clerks: vacancies nearly gone', text:`Accounting & bookkeeping clerks (4311) had 167 vacancies in 2021 — down to just 15 in 2026. Despite 773 unemployed, demand has nearly disappeared. Likely automation pressure.`},
+    {cls:'info', title:'📊 Age group with highest unemployment (2026)', text:`Professionals aged 30–34 show the highest absolute unemployment (8,242 nationally, March 2026). All age groups 25–49 for Professionals and Craft Workers show rising trends from 2025 to 2026.`},
+  ];
+  const insightData_fi = [
+    {cls:'warn', title:'📈 Kokonaistyöttömyys noussut voimakkaasti', text:`Vuodesta 2021 maaliskuuhun 2026, ${region === 'WHOLE COUNTRY' ? 'koko maassa' : 'Uudellamaalla'} työttömien työnhakijoiden määrä kasvoi ${unempChg}% (${fmt(unemp2021)} → ${fmt(unemp2026)}). Kasvu kiihtyi erityisesti 2024–2026.`},
+    {cls:'warn', title:'📉 Avoimet paikat romahtivat', text:`Avoimet paikat putosivat ${Math.abs(vacChg)}% vuodesta 2021 vuoteen 2026 (${fmt(vac2021)} → ${fmt(vac2026)}). Huippu oli 2022, jonka jälkeen tilanne on heikentynyt merkittävästi.`},
+    {cls:'warn', title:'🔴 IT ja tekniikka: kasvava epätasapaino', text:`Järjestelmäanalyytikkojen (2511) työttömyys kasvoi voimakkaasti, samalla kun avoimet paikat vähenivät. IT-sektorilla on ylikysyntää työnhakijoista.`},
+    {cls:'warn', title:'🔴 Johtajat: työttömyys lähes kolminkertaistunut', text:`Myynnin ja markkinoinnin johtajat (1221): 582 → 1 469 työttömäksi maaliskuuhun 2026 mennessä. Liiketoimintapalvelujohtajat (1219): 371 → 689. Molemmissa hyvin vähän avoimia paikkoja.`},
+    {cls:'info', title:'🔵 Rakennusten puhdistajat: tasaisin tilanne', text:`Rakennusten siivoojilla (7133) on tämän otannan tasapainoisin tilanne: ~2,7 hakijaa per paikka. Avoimia paikkoja 131 koko maassa maaliskuussa 2026.`},
+    {cls:'good', title:'🟢 Ravintolaala: aktiivinen rekrytointi', text:`Ravintolapäälliköillä (1412) on säilynyt kohtuullinen avoimien paikkojen määrä. Yksi harvoista ammateista, joissa kysyntä on pysynyt.`},
+    {cls:'purple', title:'🟣 Kirjanpitäjät: paikat käytännössä hävinneet', text:`Kirjanpidon toimistotyöntekijöillä (4311) oli 167 avointa paikkaa 2021 — enää 15 maaliskuussa 2026. Todennäköisesti automaation paine.`},
+    {cls:'info', title:'📊 Ikäryhmäanalyysi 2026', text:`30–34-vuotiaat ammattilaiset muodostavat suurimman ryhmän (8 242 työtöntä koko maassa, maaliskuu 2026). Kaikki ikäryhmät 25–49 osoittavat nousevia trendejä.`},
+  ];
+
+  const data = LANG.current === 'fi' ? insightData_fi : insightData_en;
+  const grid = document.getElementById('insightGrid');
+  grid.innerHTML = data.map(i=>`<div class="insight-item ${i.cls}"><strong>${i.title}</strong>${i.text}</div>`).join('');
+}
+
+function chartOptions(horizontal) {
+  return {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: { labels: { color: '#7d8590', font: { family: 'DM Sans', size: 12 }, boxWidth: 12 } },
+      tooltip: {
+        backgroundColor: '#1e2630', borderColor: '#2a3441', borderWidth: 1,
+        titleColor: '#e6edf3', bodyColor: '#7d8590',
+        callbacks: {
+          label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.raw?.toLocaleString('fi-FI')
+        }
+      }
+    },
+    scales: {
+      x: { ticks: { color: '#7d8590', font: { family: 'DM Sans', size: 11 } }, grid: { color: '#2a3441' } },
+      y: { ticks: { color: '#7d8590', font: { family: 'DM Sans', size: 11 } }, grid: { color: '#2a3441' } }
+    }
+  };
+}
+
+function buildAgeChart() {
+  const ages = ageData.ages;
+  const cats = Object.keys(ageData.categories);
+  const colors = ['#f78166','#58a6ff','#3fb950','#d2a8ff','#ffa657','#79c0ff','#7ee787'];
+  const ctx = document.getElementById('ageChart').getContext('2d');
+  charts['age'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ages,
+      datasets: cats.map((c,i)=>({
+        label: c, data: ageData.categories[c],
+        backgroundColor: colors[i], borderRadius: 3, barPercentage: 0.85
+      }))
+    },
+    options: {
+      ...chartOptions(false),
+      plugins: { ...chartOptions(false).plugins, legend: { position: 'bottom', labels: { color: '#7d8590', font: { family: 'DM Sans', size: 11 }, boxWidth: 12, padding: 16 } } },
+      scales: {
+        x: { stacked: true, ticks: { color: '#7d8590', font: { family: 'DM Sans', size: 12 } }, grid: { color: '#2a3441' } },
+        y: { stacked: true, ticks: { color: '#7d8590', font: { family: 'DM Sans', size: 11 } }, grid: { color: '#2a3441' } }
+      }
+    }
+  });
+}
+
+// Init
+applyTranslations();
+update();
+buildAgeChart();
+</script>
+</body>
+</html>
